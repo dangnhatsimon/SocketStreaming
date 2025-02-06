@@ -26,8 +26,6 @@ services:
       - SPARK_SSL_ENABLED=no
 
   spark-worker: &worker
-    container_name: spark-worker
-    hostname: spark-worker
     build:
       context: .
       dockerfile: Dockerfile
@@ -51,9 +49,9 @@ services:
     networks:
       - socket-streaming
 
-#  spark-worker-2:
-#    <<: *worker
-#
+  spark-worker-2:
+    <<: *worker
+
 #  spark-worker-3:
 #    <<: *worker
 #

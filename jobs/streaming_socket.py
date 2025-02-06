@@ -18,15 +18,15 @@ def send_data_over_socket(
     port: str = 9999,
     chunk_size: int = 2
 ):
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.bind((host, port))
-    s.listen(1)
-    logging.info(f"Listened for connection on {host}:{port}.")
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.bind((host, port))
+    server.listen()
+    logging.info(f"Listening for connection on {host}:{port}.")
 
     last_sent_index = 0
     while True:
-        conn, addr = s.accept()
-        logging.info(f"Connection from {addr}.")
+        client_socket, client_address = server.accept()
+        logging.info(f"Accepted connection from {client_address[0]}:{client_address[1]}.")
 
         try:
             with open(file_path, "r") as file:
@@ -38,24 +38,32 @@ def send_data_over_socket(
                     records.append(json.loads(line))
                     if (len(records)) == chunk_size:
                         chunk = pd.DataFrame(data=records)
-                        logging.info(f"Chunk: {chunk}")
+                        logging.info(f"Sending chunk to {client_address[0]}:{client_address[1]}: \n{chunk}")
                         for record in chunk.to_dict(orient="records"):
                             serialized_data = json.dumps(record).encode("utf-8")
-                            conn.send(serialized_data + b"\n")
-                            time.sleep(3)
+                            client_socket.send(serialized_data + b"\n")
                             last_sent_index += 1
                         records = []
-        except (BrokenPipeError, ConnectionResetError):
-            logging.error("Client disconnected.")
+        except (BrokenPipeError, ConnectionResetError) as e:
+            logging.error(f"Client {client_address[0]}:{client_address[1]} disconnected: {e}")
+        except Exception as e:
+            logging.error(f"Error with {client_address[0]}:{client_address[1]}: {e}", exc_info=True)
         finally:
-            conn.close()
-            logging.info("Connection closed.")
+            client_socket.close()
+            logging.info(f"Connection with {client_address[0]}:{client_address[1]} closed.")
 
 
 if __name__ == "__main__":
+    # send_data_over_socket(
+    #     file_path="./datasets/yelp_academic_dataset_review.json",
+    #     host="127.0.0.1",
+    #     port=9999,
+    #     chunk_size=2
+    # )
     send_data_over_socket(
-        file_path="datasets/yelp_academic_dataset_review.json",
-        host="127.0.0.1",
+        file_path="./datasets/yelp_academic_dataset_review.json",
+        host="spark-master",
         port=9999,
         chunk_size=2
     )
+    # docker exec -it spark-master python jobs/streaming_socket.py

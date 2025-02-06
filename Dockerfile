@@ -15,4 +15,4 @@ RUN apt-get update && apt-get install -y python3-pip && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Switch back to the default user (optional, if Bitnami sets it)
-USER 1001
+# USER 1001
