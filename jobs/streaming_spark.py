@@ -38,7 +38,11 @@ def streaming_spark(
                 StructField("text", StringType()),
             ]
         )
-        stream_df = stream_df.select(from_json(col("value"), schema).alias("data")).select("data.*")
+        stream_df = (
+            stream_df
+            .select(from_json(col("value"), schema).alias("data"))
+            .select("data.*")
+        )
 
         query = (
             stream_df.writeStream
@@ -78,16 +82,21 @@ def streaming_spark_kafka(
                     StructField("text", StringType()),
                 ]
             )
-            stream_df = stream_df.select(from_json(col("value"), schema).alias("data")).select("data.*")
+            stream_df = (
+                stream_df
+                .select(from_json(col("value"), schema).alias("data"))
+                .select("data.*")
+            )
 
             kafka_df = stream_df.selectExpr("CAST(review_id AS STRING) AS key", "to_json(struct(*)) AS value")
+
             query = (
                 (
                     kafka_df.writeStream.format("kafka")
                     .option("kafka.bootstrap.servers", config["kafka"]["bootstrap.servers"])
                     .option("kafka.security.protocol", config["kafka"]["security.protocol"])
                     .option("kafka.sasl.mechanisms", config["kafka"]["sasl.mechanisms"])
-                    .option("kafka.sasl.jaas.config", f'org.apache.kafka.common.security.plain.PlainLoginModule required username="{config["kafka"]["sasl.username"]}" password="{config["kafka"]["sasl.password"]}";')
+                    .option("kafka.sasl.jaas.config", f"""org.apache.kafka.common.security.plain.PlainLoginModule required username="{config["kafka"]["sasl.username"]}" password="{config["kafka"]["sasl.password"]}";""")
                 )
                 .option("checkpointLocation", "/tmp/checkpoint")
                 .option("topic", topic)
@@ -155,11 +164,12 @@ def streaming_spark_kafka_sentimental(
             kafka_df = stream_df.selectExpr("CAST(review_id AS STRING) AS key", "to_json(struct(*)) AS value")
             query = (
                 (
-                    kafka_df.writeStream.format("kafka")
+                    kafka_df.writeStream
+                    .format("kafka")
                     .option("kafka.bootstrap.servers", config["kafka"]["bootstrap.servers"])
                     .option("kafka.security.protocol", config["kafka"]["security.protocol"])
                     .option("kafka.sasl.mechanisms", config["kafka"]["sasl.mechanisms"])
-                    .option("kafka.sasl.jaas.config", f'org.apache.kafka.common.security.plain.PlainLoginModule required username="{config["kafka"]["sasl.username"]}" password="{config["kafka"]["sasl.password"]}";')
+                    .option("kafka.sasl.jaas.config", f"""org.apache.kafka.common.security.plain.PlainLoginModule required username="{config["kafka"]["sasl.username"]}" password="{config["kafka"]["sasl.password"]}";""")
                 )
                 .option("checkpointLocation", "/tmp/checkpoint")
                 .option("topic", topic)
@@ -173,8 +183,9 @@ def streaming_spark_kafka_sentimental(
 if __name__ == "__main__":
     spark_conn = SparkSession.builder.appName("SocketStreamConsumer").getOrCreate()
 
-    # streaming_spark(spark_conn, host="0.0.0.0", port=9999)
+    # streaming_spark(spark_conn, host="localhost", port=9999)
 
-    streaming_spark_kafka(spark_conn, topic="customers_review", host="0.0.0.0", port=9999)
-    # docker exec -it spark-master spark-submit --master spark://spark-master:7077 --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.3 jobs/streaming_spark.py
+    streaming_spark_kafka(spark_conn, topic="customers_review", host="spark-master", port=9999)
     # streaming_spark_kafka_sentimental(spark_conn, topic="customers_review", host="0.0.0.0", port=9999)
+    
+# docker exec -it spark-master spark-submit --master spark://spark-master:7077 --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.3 jobs/streaming_spark.py
