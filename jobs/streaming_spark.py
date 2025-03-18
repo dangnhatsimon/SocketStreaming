@@ -181,7 +181,17 @@ def streaming_spark_kafka_sentimental(
 
 
 if __name__ == "__main__":
-    spark_conn = SparkSession.builder.appName("SocketStreamConsumer").getOrCreate()
+    spark_conn = (
+        SparkSession.builder
+        .appName("SocketStreamConsumer")
+        .config("spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.3")
+        .config("spark.driver.cores", 2)
+        .config("spark.driver.memory", "2g")
+        .config("spark.executor.memory", "1g")
+        .config("spark.submit.deployMode", "client")
+        .config("spark.log.level", "ALL")
+        .getOrCreate()
+    )
 
     # streaming_spark(spark_conn, host="localhost", port=9999)
 
