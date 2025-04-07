@@ -184,7 +184,7 @@ if __name__ == "__main__":
     spark_conn = (
         SparkSession.builder
         .appName("SocketStreamConsumer")
-        .config("spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.3")
+        .config("spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.13:3.5.3")
         .config("spark.driver.cores", 2)
         .config("spark.driver.memory", "2g")
         .config("spark.executor.memory", "1g")
@@ -198,4 +198,4 @@ if __name__ == "__main__":
     streaming_spark_kafka(spark_conn, topic="customers_review", host="spark-master", port=9999)
     # streaming_spark_kafka_sentimental(spark_conn, topic="customers_review", host="0.0.0.0", port=9999)
     
-# docker exec -it spark-master spark-submit --master spark://spark-master:7077 --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.3 jobs/streaming_spark.py
+# docker exec -it socketstreaming-spark-master spark-submit --master spark://socketstreaming-spark-master:7077 --packages org.apache.spark:spark-sql-kafka-0-10_2.13:3.5.3 jobs/streaming_spark.py

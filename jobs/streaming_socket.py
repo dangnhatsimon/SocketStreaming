@@ -66,4 +66,4 @@ if __name__ == "__main__":
         port=9999,
         chunk_size=2
     )
-    # docker exec -it spark-master python jobs/streaming_socket.py
+    # docker exec -it socketstreaming-spark-master python jobs/streaming_socket.py
