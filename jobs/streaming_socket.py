@@ -2,7 +2,7 @@ import json
 import socket
 import time
 import logging
-import pandas as pd
+import polars as pl
 
 
 logging.basicConfig(
@@ -37,7 +37,7 @@ def send_data_over_socket(
                 for line in file:
                     records.append(json.loads(line))
                     if (len(records)) == chunk_size:
-                        chunk = pd.DataFrame(data=records)
+                        chunk = pl.DataFrame(data=records)
                         logging.info(f"Sending chunk to {client_address[0]}:{client_address[1]}: \n{chunk}")
                         for record in chunk.to_dict(orient="records"):
                             serialized_data = json.dumps(record).encode("utf-8")
