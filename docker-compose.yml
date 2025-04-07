@@ -1,18 +1,47 @@
 version: "3"
 
+
+x-spark-common: &spark-common
+  build:
+    context: .
+    dockerfile: ./Dockerfile
+  volumes:
+    - ./config:/opt/bitnami/spark/conf
+    - ./jobs:/opt/bitnami/spark/jobs
+    - ./jobs:/opt/notebooks
+    - ./datasets:/opt/bitnami/spark/datasets
+    - ./spark-events:/opt/bitnami/spark/spark-events
+  networks:
+    - socket-streaming
+
+
+x-spark-worker: &worker
+  <<: *spark-common
+  command: bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
+  depends_on:
+    - spark-master
+  environment:
+    SPARK_MODE: worker
+    SPARK_WORKER_CORES: ${SPARK_WORKER_CORES:-4}
+    SPARK_WORKER_MEMORY: ${SPARK_WORKER_MEMORY:-4g}
+    SPARK_MASTER_URL: spark://spark-master:7077
+    SPARK_RPC_AUTHENTICATION_ENABLED: no
+    SPARK_RPC_ENCRYPTION_ENABLED: no
+    SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED: no
+    SPARK_SSL_ENABLED: no
+    SPARK_METRICS_ENABLED: true
+  healthcheck:
+    test: [ "CMD", "curl", "-f", "http://localhost:8081" ]
+    interval: 10s
+    timeout: 5s
+    retries: 5
+
+
 services:
   spark-master:
-    container_name: spark-master
-    hostname: spark-master
-    build:
-      context: .
-      dockerfile: Dockerfile
-    command: bin/spark-class org.apache.spark.deploy.master.Master
-    volumes:
-      - ./config:/opt/bitnami/spark/config
-      - ./jobs:/opt/bitnami/spark/jobs
-      - ./datasets:/opt/bitnami/spark/datasets
-      - ./requirements.txt:/requirements.txt
+    <<: *spark-common
+    container_name: socketstreaming-spark-master
+    hostname: socketstreaming-spark-master
     ports:
       - "9090:8080"
       - "7077:7077"
@@ -24,38 +53,21 @@ services:
       - SPARK_RPC_ENCRYPTION_ENABLED=no
       - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
       - SPARK_SSL_ENABLED=no
+      - SPARK_METRICS_ENABLED=true
 
-  spark-worker: &worker
-    build:
-      context: .
-      dockerfile: Dockerfile
-    command: bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
-    volumes:
-      - ./config:/opt/bitnami/spark/config
-      - ./jobs:/opt/bitnami/spark/jobs
-      - ./datasets:/opt/bitnami/spark/datasets
-      - ./requirements.txt:/requirements.txt
-    depends_on:
-      - spark-master
-    environment:
-      SPARK_MODE: worker
-      SPARK_WORKER_CORES: 2
-      SPARK_WORKER_MEMORY: 1g
-      SPARK_MASTER_URL: spark://spark-master:7077
-      SPARK_RPC_AUTHENTICATION_ENABLED: no
-      SPARK_RPC_ENCRYPTION_ENABLED: no
-      SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED: no
-      SPARK_SSL_ENABLED: no
-    networks:
-      - socket-streaming
+  spark-worker-1:
+    <<: *worker
+    container_name: socketstreaming-spark-worker-1
+    ports:
+      - "8081:8081"
 
   spark-worker-2:
     <<: *worker
+    container_name: socketstreaming-spark-worker-2
+    ports:
+      - "8082:8081"
 
-#  spark-worker-3:
-#    <<: *worker
-#
-#  spark-worker-4:
-#    <<: *worker
+
 networks:
   socket-streaming:
+    driver: bridge
