@@ -1,6 +1,5 @@
 version: "3"
 
-
 x-spark-common: &spark-common
   build:
     context: .
@@ -8,12 +7,10 @@ x-spark-common: &spark-common
   volumes:
     - ./config:/opt/bitnami/spark/conf
     - ./jobs:/opt/bitnami/spark/jobs
-    - ./jobs:/opt/notebooks
     - ./datasets:/opt/bitnami/spark/datasets
     - ./spark-events:/opt/bitnami/spark/spark-events
   networks:
     - socket-streaming
-
 
 x-spark-worker: &worker
   <<: *spark-common
@@ -35,7 +32,6 @@ x-spark-worker: &worker
     interval: 10s
     timeout: 5s
     retries: 5
-
 
 services:
   spark-master:
@@ -67,7 +63,10 @@ services:
     ports:
       - "8082:8081"
 
-
 networks:
   socket-streaming:
     driver: bridge
+
+volumes:
+  spark-events:
+    external: true
