@@ -39,7 +39,7 @@ def send_data_over_socket(
                     if (len(records)) == chunk_size:
                         chunk = pl.DataFrame(data=records)
                         logging.info(f"Sending chunk to {client_address[0]}:{client_address[1]}: \n{chunk}")
-                        for record in chunk.to_dict(orient="records"):
+                        for record in chunk.to_dicts():
                             serialized_data = json.dumps(record).encode("utf-8")
                             client_socket.send(serialized_data + b"\n")
                             last_sent_index += 1
@@ -62,7 +62,7 @@ if __name__ == "__main__":
     # )
     send_data_over_socket(
         file_path="./datasets/yelp_academic_dataset_review.json",
-        host="spark-master",
+        host="socketstreaming-spark-master",
         port=9999,
         chunk_size=2
     )

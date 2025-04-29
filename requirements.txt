@@ -2,3 +2,4 @@ py4j==0.10.9.7
 pyspark==3.5.3
 pyarrow==19.0.1
 polars==1.26.0
+openai==1.76.0

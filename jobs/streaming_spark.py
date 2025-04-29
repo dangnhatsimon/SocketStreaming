@@ -3,7 +3,7 @@ from pyspark.sql import SparkSession
 from pyspark.sql.types import StructType, StructField, StringType, FloatType
 from pyspark.sql.functions import from_json, col, when, udf, to_json, struct
 import logging
-from config.config import config
+from conf.config import config
 import openai
 from time import sleep
 
@@ -193,9 +193,9 @@ if __name__ == "__main__":
         .getOrCreate()
     )
 
-    # streaming_spark(spark_conn, host="localhost", port=9999)
+    streaming_spark(spark_conn, host="socketstreaming-spark-master", port=9999)
 
-    streaming_spark_kafka(spark_conn, topic="customers_review", host="spark-master", port=9999)
+    # streaming_spark_kafka(spark_conn, topic="customers_review", host="socketstreaming-spark-master", port=9999)
     # streaming_spark_kafka_sentimental(spark_conn, topic="customers_review", host="0.0.0.0", port=9999)
     
 # docker exec -it socketstreaming-spark-master spark-submit --master spark://socketstreaming-spark-master:7077 --packages org.apache.spark:spark-sql-kafka-0-10_2.13:3.5.3 jobs/streaming_spark.py

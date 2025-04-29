@@ -55,8 +55,8 @@ COPY config/* "$SPARK_HOME/conf/"
 FROM spark-base AS pyspark
 
 # Install python deps
-COPY spark.requirements.txt .
-RUN pip3 install -r spark.requirements.txt
+COPY requirements.txt .
+RUN pip3 install -r requirements.txt
 
 
 FROM pyspark AS pyspark-runner
@@ -83,17 +83,17 @@ RUN chmod u+x /opt/spark/entrypoint.sh
 
 
 # Optionally install Jupyter
-FROM pyspark-runner AS pyspark-jupyter
-
-RUN pip3 install notebook
-
-ENV JUPYTER_PORT=8889
-
-ENV PYSPARK_DRIVER_PYTHON=jupyter
-ENV PYSPARK_DRIVER_PYTHON_OPTS="notebook --no-browser --allow-root --ip=0.0.0.0 --port=${JUPYTER_PORT}"
- # --ip=0.0.0.0 - listen all interfaces
- # --port=${JUPYTER_PORT} - listen ip on port 8889
- # --allow-root - to run Jupyter in this container by root user. It is adviced to change the user to non-root.
+#FROM pyspark-runner AS pyspark-jupyter
+#
+#RUN pip3 install notebook
+#
+#ENV JUPYTER_PORT=8889
+#
+#ENV PYSPARK_DRIVER_PYTHON=jupyter
+#ENV PYSPARK_DRIVER_PYTHON_OPTS="notebook --no-browser --allow-root --ip=0.0.0.0 --port=${JUPYTER_PORT}"
+# # --ip=0.0.0.0 - listen all interfaces
+# # --port=${JUPYTER_PORT} - listen ip on port 8889
+# # --allow-root - to run Jupyter in this container by root user. It is adviced to change the user to non-root.
 
 
 ENTRYPOINT ["./entrypoint.sh"]
