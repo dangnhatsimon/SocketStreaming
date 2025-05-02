@@ -58,7 +58,7 @@ services:
     depends_on:
       - spark-master
     ports:
-      - '8082:8082'
+      - '8082:8081'
 
   spark-worker-3:
     container_name: socketstreaming-spark-worker-3
@@ -67,7 +67,7 @@ services:
     depends_on:
       - spark-master
     ports:
-      - '8083:8083'
+      - '8083:8081'
 
 volumes:
   spark-events:
