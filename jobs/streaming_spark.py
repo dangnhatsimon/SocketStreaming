@@ -3,9 +3,10 @@ from pyspark.sql import SparkSession
 from pyspark.sql.types import StructType, StructField, StringType, FloatType
 from pyspark.sql.functions import from_json, col, when, udf, to_json, struct
 import logging
-from conf.config import config
 import openai
 from time import sleep
+from dotenv import load_dotenv
+import os
 
 
 logging.basicConfig(
@@ -13,6 +14,9 @@ logging.basicConfig(
     datefmt="%y-%m-%d %H:%M:%S",
     level=logging.DEBUG
 )
+
+
+load_dotenv(dotenv_path="/opt/spark/spark-config/.env")
 
 
 def streaming_spark(
@@ -93,12 +97,12 @@ def streaming_spark_kafka(
             query = (
                 (
                     kafka_df.writeStream.format("kafka")
-                    .option("kafka.bootstrap.servers", config["kafka"]["bootstrap.servers"])
-                    .option("kafka.security.protocol", config["kafka"]["security.protocol"])
-                    .option("kafka.sasl.mechanisms", config["kafka"]["sasl.mechanisms"])
-                    .option("kafka.sasl.jaas.config", f"""org.apache.kafka.common.security.plain.PlainLoginModule required username="{config["kafka"]["sasl.username"]}" password="{config["kafka"]["sasl.password"]}";""")
+                    .option("kafka.bootstrap.servers", os.getenv("bootstrap.servers"))
+                    .option("kafka.security.protocol", os.getenv("security.protocol"))
+                    .option("kafka.sasl.mechanisms", os.getenv("sasl.mechanisms"))
+                    .option("kafka.sasl.jaas.config", f"""org.apache.kafka.common.security.plain.PlainLoginModule required username="{os.getenv("sasl.username")}" password="{os.getenv("sasl.password")}";""")
                 )
-                .option("checkpointLocation", "/tmp/checkpoint")
+                .option("checkpointLocation", "/opt/spark/spark-checkpoint")
                 .option("topic", topic)
                 .start()
             )
@@ -110,7 +114,7 @@ def streaming_spark_kafka(
 
 def sentimental_analysis(comment: str) -> str:
     if comment:
-        openai.api_key = config["openai"]["api_key"]
+        openai.api_key = os.getenv("openai")
         completion = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=[
@@ -166,12 +170,12 @@ def streaming_spark_kafka_sentimental(
                 (
                     kafka_df.writeStream
                     .format("kafka")
-                    .option("kafka.bootstrap.servers", config["kafka"]["bootstrap.servers"])
-                    .option("kafka.security.protocol", config["kafka"]["security.protocol"])
-                    .option("kafka.sasl.mechanisms", config["kafka"]["sasl.mechanisms"])
-                    .option("kafka.sasl.jaas.config", f"""org.apache.kafka.common.security.plain.PlainLoginModule required username="{config["kafka"]["sasl.username"]}" password="{config["kafka"]["sasl.password"]}";""")
+                    .option("kafka.bootstrap.servers", os.getenv("bootstrap.servers"))
+                    .option("kafka.security.protocol", os.getenv("security.protocol"))
+                    .option("kafka.sasl.mechanisms", os.getenv("sasl.mechanisms"))
+                    .option("kafka.sasl.jaas.config", f"""org.apache.kafka.common.security.plain.PlainLoginModule required username="{os.getenv("sasl.username")}" password="{os.getenv("sasl.password")}";""")
                 )
-                .option("checkpointLocation", "/tmp/checkpoint")
+                .option("checkpointLocation", "/opt/spark/spark-checkpoint")
                 .option("topic", topic)
                 .start()
             )
@@ -184,7 +188,6 @@ if __name__ == "__main__":
     spark_conn = (
         SparkSession.builder
         .appName("SocketStreamConsumer")
-        .config("spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.13:3.5.3")
         .config("spark.driver.cores", 2)
         .config("spark.driver.memory", "2g")
         .config("spark.executor.memory", "1g")

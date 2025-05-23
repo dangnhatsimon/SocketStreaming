@@ -1,0 +1,10 @@
+openai=key
+sasl.username=
+sasl.password=
+bootstrap.servers=
+security.protocol=SASL_SSL
+sasl.mechanisms=PLAIN
+session.timeout.ms=50000
+schema_registry_url=
+basic.auth.user.info=
+
